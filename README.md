@@ -70,7 +70,7 @@ Try the bundled example workspace: `npm run example` (inside the clone).
 
 - **Claude Code** — [`integrations/claude-code/anc-context.mjs`](./integrations/claude-code/anc-context.mjs) is a `PreToolUse` hook for `Edit|Write|MultiEdit|NotebookEdit`. Before an edit it returns that module's contract as `additionalContext` (at most once per module every 30 minutes in a session), which is how a `PreToolUse` hook gets text in front of the model. It never blocks an edit. Wiring is in the file header.
 - **Cursor** — [`integrations/cursor/rules/anc.mdc`](./integrations/cursor/rules/anc.mdc): query before editing, verify before finishing.
-- **GitHub Actions** — [`integrations/github-actions/anc-ci.yml`](./integrations/github-actions/anc-ci.yml): runs `anc check` from this repo at a commit you pin.
+- **GitHub Actions** — [`integrations/github-actions/anc-ci.yml`](./integrations/github-actions/anc-ci.yml): fetches this repo at a commit you pin and runs `anc check`. It runs `check` only, not `verify`, so it is safe on pull requests from forks.
 
 The `authority` section is guidance for the agent. ANC does not enforce it; use your agent's permission rules or a path-based hook to block protected files.
 

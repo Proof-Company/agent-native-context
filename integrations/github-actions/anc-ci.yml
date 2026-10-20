@@ -1,5 +1,6 @@
 # Agent-Native Context check — copy to .github/workflows/anc.yml
-# Runs the ANC kit straight from GitHub (it is not published to npm). Pin a commit SHA you have reviewed.
+# The ANC kit is not published to npm; this fetches it from GitHub at a commit you have reviewed and pinned.
+# (`npx github:…` was tried and fails on npm 10.9 with "GitFetcher requires an Arborist constructor".)
 name: ANC
 
 on:
@@ -10,10 +11,18 @@ on:
 jobs:
   anc:
     runs-on: ubuntu-latest
+    env:
+      ANC_SHA: "<commit-sha>" # pin a reviewed commit of github.com/Proof-Company/agent-native-context
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - name: Fetch the ANC kit at the pinned commit
+        run: |
+          git init -q "$RUNNER_TEMP/anc"
+          git -C "$RUNNER_TEMP/anc" fetch -q --depth 1 https://github.com/Proof-Company/agent-native-context.git "$ANC_SHA"
+          git -C "$RUNNER_TEMP/anc" checkout -q FETCH_HEAD
+          npm install --prefix "$RUNNER_TEMP/anc" --omit=dev --no-audit --no-fund
       - name: anc check (schema, dependency parity, cycles, test-oracle integrity)
-        run: npx --yes github:Proof-Company/agent-native-context#<commit-sha> check
+        run: node "$RUNNER_TEMP/anc/bin/anc.mjs" check
