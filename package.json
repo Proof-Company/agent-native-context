@@ -1,0 +1,50 @@
+{
+    "name": "@proof/anc",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Agent-Native Context (ANC): checkable per-module contracts (CONTEXT.agent.yaml) for AI coding agents, and the CLI that checks them",
+    "author": "Proof Restoration ERP LLC",
+    "license": "MIT",
+    "type": "module",
+    "main": "./lib/index.mjs",
+    "types": "./index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./index.d.ts",
+            "default": "./lib/index.mjs"
+        },
+        "./selftest": "./lib/selftest.mjs"
+    },
+    "bin": {
+        "anc": "./bin/anc.mjs"
+    },
+    "files": [
+        "bin",
+        "lib",
+        "schemas",
+        "integrations",
+        "index.d.ts",
+        "SPECIFICATION.md",
+        "LICENSE"
+    ],
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
+        "test": "node bin/anc.mjs selftest",
+        "example": "node bin/anc.mjs check --root examples/monorepo && node bin/anc.mjs verify --all --root examples/monorepo"
+    },
+    "keywords": [
+        "ai-agents",
+        "coding-agents",
+        "claude-code",
+        "cursor",
+        "monorepo",
+        "invariants",
+        "design-by-contract"
+    ],
+    "dependencies": {
+        "ajv": "^8.17.1",
+        "yaml": "^2.7.0"
+    }
+}

@@ -1,0 +1,426 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://www.proofco.ai/schemas/context-agent.schema.json",
+    "title": "CONTEXT.agent.yaml",
+    "description": "Agent-Native Context (ANC): a machine-checkable contract for one module (package, app or tool), read by AI coding agents and checked by the anc CLI. File name: CONTEXT.agent.yaml, placed in the module directory.",
+    "type": "object",
+    "required": ["module"],
+    "additionalProperties": false,
+    "properties": {
+        "module": {
+            "type": "object",
+            "description": "Identity and location of this module.",
+            "required": ["name", "purpose", "domain", "path"],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Package name without its npm scope (e.g. core for @acme/core), or a tool name."
+                },
+                "package": {
+                    "type": ["string", "null"],
+                    "description": "Full package-manager name (e.g. @acme/core), or null for non-packages."
+                },
+                "purpose": {
+                    "type": "string",
+                    "description": "One-line description of what this module does."
+                },
+                "domain": {
+                    "type": "string",
+                    "description": "Business or technical domain this module belongs to (free text; a workspace may restrict it with its own schema).",
+                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                "path": {
+                    "type": "string",
+                    "description": "Relative path from repo root to this module's directory."
+                }
+            }
+        },
+        "health": {
+            "type": "object",
+            "description": "Current health assessment of this module.",
+            "required": ["grade", "last_audited"],
+            "additionalProperties": false,
+            "properties": {
+                "grade": {
+                    "type": "string",
+                    "description": "Letter grade A through F with optional +/- modifier.",
+                    "enum": [
+                        "A+",
+                        "A",
+                        "A-",
+                        "B+",
+                        "B",
+                        "B-",
+                        "C+",
+                        "C",
+                        "C-",
+                        "D+",
+                        "D",
+                        "D-",
+                        "F"
+                    ]
+                },
+                "completion": {
+                    "type": "number",
+                    "description": "Percentage of intended functionality that is implemented and working.",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                "known_issues": {
+                    "type": "array",
+                    "description": "Known defects or gaps.",
+                    "items": {
+                        "type": "object",
+                        "required": ["id", "severity", "description"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "Unique issue identifier within this module."
+                            },
+                            "severity": {
+                                "type": "string",
+                                "enum": ["critical", "high", "medium", "low"]
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "affects": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Modules or surfaces affected by this issue."
+                            }
+                        }
+                    }
+                },
+                "resolved_issues": {
+                    "type": "array",
+                    "description": "Resolved defects, gaps, or optimizations.",
+                    "items": {
+                        "type": "object",
+                        "required": ["id", "resolution"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "Unique issue identifier within this module."
+                            },
+                            "severity": {
+                                "type": "string",
+                                "enum": ["critical", "high", "medium", "low"]
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "resolution": {
+                                "type": "string"
+                            },
+                            "resolved_in": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "last_audited": {
+                    "type": "string",
+                    "description": "ISO 8601 date of the last audit of this health assessment.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                }
+            }
+        },
+        "entities": {
+            "type": "array",
+            "description": "Domain entities owned by this module.",
+            "items": {
+                "type": "object",
+                "required": ["name"],
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Entity name in PascalCase."
+                    },
+                    "states": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Lifecycle states this entity passes through."
+                    },
+                    "key_field": {
+                        "type": "string",
+                        "description": "Primary key or identifying field."
+                    },
+                    "parent": {
+                        "type": ["string", "null"],
+                        "description": "Parent entity if this is a child record."
+                    }
+                }
+            }
+        },
+        "dependencies": {
+            "type": "object",
+            "description": "How this module connects to others. Trust level 2: trust but verify.",
+            "additionalProperties": false,
+            "properties": {
+                "reads_from": {
+                    "type": "array",
+                    "description": "Modules this one reads data from.",
+                    "items": {
+                        "type": "object",
+                        "required": ["module", "via"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "module": {
+                                "type": "string",
+                                "description": "Name of the dependency module (without its npm scope)."
+                            },
+                            "via": {
+                                "type": "string",
+                                "description": "How the dependency is consumed.",
+                                "enum": [
+                                    "import",
+                                    "rpc",
+                                    "db-realtime",
+                                    "db-query",
+                                    "event",
+                                    "file",
+                                    "cli"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "writes_to": {
+                    "type": "array",
+                    "description": "Modules this one writes data to or triggers side effects in.",
+                    "items": {
+                        "type": "object",
+                        "required": ["module", "via"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "module": {
+                                "type": "string",
+                                "description": "Name of the target module."
+                            },
+                            "via": {
+                                "type": "string",
+                                "enum": [
+                                    "import",
+                                    "rpc",
+                                    "db-realtime",
+                                    "db-query",
+                                    "event",
+                                    "file",
+                                    "cli"
+                                ]
+                            },
+                            "risk": {
+                                "type": "string",
+                                "description": "Risk level of this write path.",
+                                "enum": ["low", "medium", "high", "critical"]
+                            }
+                        }
+                    }
+                },
+                "shared_tables": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Database tables (or other shared data stores) this module shares with others."
+                },
+                "last_verified": {
+                    "type": "string",
+                    "description": "ISO 8601 date when dependencies were last verified against package.json.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                }
+            }
+        },
+        "invariants": {
+            "type": "array",
+            "description": "Rules that must never be violated. Trust level 1: trust as law.",
+            "items": {
+                "type": "object",
+                "required": ["id", "rule", "type"],
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique invariant identifier within this module."
+                    },
+                    "rule": {
+                        "type": "string",
+                        "description": "The invariant stated as a rule."
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": ["data", "process", "security", "integrity"]
+                    },
+                    "enforced_by": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "What enforces this invariant (test files, CI gates, database policies, etc.)."
+                    },
+                    "test": {
+                        "type": ["string", "null"],
+                        "description": "Shell command that proves this invariant holds. Null if not mechanically testable."
+                    }
+                }
+            }
+        },
+        "authority": {
+            "type": "object",
+            "description": "What agents can do autonomously vs. what needs human approval.",
+            "additionalProperties": false,
+            "properties": {
+                "autonomous": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Actions agents may take without asking."
+                },
+                "founder_approval": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Actions that require founder sign-off."
+                },
+                "notes": {
+                    "type": ["string", "null"],
+                    "description": "Additional authority context."
+                }
+            }
+        },
+        "blast_radius": {
+            "type": "object",
+            "description": "Impact assessment for changes to this module. Trust level 3: derive don't trust.",
+            "required": ["level"],
+            "additionalProperties": false,
+            "properties": {
+                "level": {
+                    "type": "string",
+                    "description": "Overall blast radius level.",
+                    "enum": ["low", "medium", "high", "critical"]
+                },
+                "downstream": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Modules that depend on this one."
+                },
+                "upstream": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Modules this one depends on."
+                },
+                "data_impact": {
+                    "type": "string",
+                    "description": "Description of data impact if this module breaks."
+                }
+            }
+        },
+        "active_work": {
+            "type": "array",
+            "description": "In-flight changes. Trust level 4: always re-check.",
+            "items": {
+                "type": "object",
+                "required": ["scope", "status"],
+                "additionalProperties": false,
+                "properties": {
+                    "branch": {
+                        "type": "string",
+                        "description": "Git branch name."
+                    },
+                    "pr": {
+                        "type": ["integer", "null"],
+                        "description": "Pull request number, or null if not yet opened."
+                    },
+                    "scope": {
+                        "type": "string",
+                        "description": "What this work changes."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Current status of this work.",
+                        "enum": ["in-progress", "in-review", "blocked", "landed"]
+                    },
+                    "session_date": {
+                        "type": "string",
+                        "description": "ISO 8601 date of the last session that touched this work.",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    }
+                }
+            }
+        },
+        "artifacts": {
+            "type": "object",
+            "description": "For methodology modules: key file artifacts this module produces or manages.",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "tools_required": {
+            "type": "array",
+            "description": "For methodology modules: tooling this module depends on.",
+            "items": {
+                "type": "object",
+                "required": ["tool", "purpose"],
+                "additionalProperties": false,
+                "properties": {
+                    "tool": {
+                        "type": "string",
+                        "description": "Path or command for the tool."
+                    },
+                    "purpose": {
+                        "type": "string",
+                        "description": "What this tool does for the module."
+                    },
+                    "required_for": {
+                        "type": "string",
+                        "description": "Which phase or operation requires this tool."
+                    }
+                }
+            }
+        },
+        "session_warmup": {
+            "type": "object",
+            "description": "Protocol for agents starting a session involving this module.",
+            "additionalProperties": false,
+            "properties": {
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["action"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "action": {
+                                "type": "string",
+                                "description": "What the agent should do."
+                            },
+                            "tokens": {
+                                "type": "string",
+                                "description": "Approximate token budget for this step."
+                            },
+                            "condition": {
+                                "type": "string",
+                                "description": "When this step applies (e.g. 'if task weight >= Standard')."
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

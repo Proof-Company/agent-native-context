@@ -1,0 +1,19 @@
+# Agent-Native Context check — copy to .github/workflows/anc.yml
+# Runs the ANC kit straight from GitHub (it is not published to npm). Pin a commit SHA you have reviewed.
+name: ANC
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  anc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: anc check (schema, dependency parity, cycles, test-oracle integrity)
+        run: npx --yes github:Proof-Company/agent-native-context#<commit-sha> check

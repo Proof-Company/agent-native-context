@@ -1,0 +1,32 @@
+module:
+  name: web
+  package: "@example/web"
+  purpose: Storefront that prices orders through @example/money
+  domain: storefront
+  path: apps/web/
+
+dependencies:
+  reads_from:
+    - module: money
+      via: import
+  writes_to: []
+
+invariants:
+  - id: web-01
+    rule: Order totals are computed with @example/money, never with inline arithmetic
+    type: data
+    enforced_by:
+      - apps/web/src/checkout.js
+    test: null
+
+authority:
+  autonomous:
+    - Change pages and components
+  founder_approval:
+    - Change how order totals are computed
+
+blast_radius:
+  level: medium
+  upstream:
+    - money
+  data_impact: Customers see a wrong total.

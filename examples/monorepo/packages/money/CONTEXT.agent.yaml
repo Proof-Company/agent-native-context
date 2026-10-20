@@ -1,0 +1,31 @@
+module:
+  name: money
+  package: "@example/money"
+  purpose: Integer-cent money arithmetic shared by every app
+  domain: payments
+  path: packages/money/
+
+dependencies:
+  reads_from: []
+  writes_to: []
+
+invariants:
+  - id: money-01
+    rule: Amounts are integer cents; no floating-point money math
+    type: data
+    enforced_by:
+      - packages/money/src/index.js
+      - packages/money/test/cents.test.mjs
+    test: node --test packages/money/test/cents.test.mjs
+
+authority:
+  autonomous:
+    - Add helpers that keep amounts in integer cents, with tests
+  founder_approval:
+    - Change rounding rules or the unit amounts are stored in
+
+blast_radius:
+  level: high
+  downstream:
+    - web
+  data_impact: A wrong rounding rule mis-prices every checkout.

@@ -1,0 +1,24 @@
+---
+description: Agent-Native Context — read the module contract before editing, run its tests before finishing
+globs: "**/*"
+alwaysApply: true
+---
+
+# Agent-Native Context (ANC)
+
+Each module may carry a `CONTEXT.agent.yaml`. Before you change a file:
+
+1. Print the contract for that file (adjust the path to where the ANC kit lives in this repo):
+   ```bash
+   node tools/anc/bin/anc.mjs query <path/to/file>
+   ```
+2. Do not break the listed invariants. Before you call the work done, run their tests:
+   ```bash
+   node tools/anc/bin/anc.mjs verify <path/to/file>
+   ```
+   A failing test means the work is not done. Do not edit or skip the test to get it green; say so instead.
+3. If the change matches anything under "Stop and get sign-off before you", stop and ask a human.
+4. If you add or remove a workspace dependency in a `package.json`, update `dependencies` in that module's contract, then run:
+   ```bash
+   node tools/anc/bin/anc.mjs check
+   ```
