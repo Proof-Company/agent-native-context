@@ -2,6 +2,27 @@
 
 Small, checkable contracts that sit beside each module of a repository and tell an AI coding agent what must stay true there, how to check it, and what needs a person's sign-off. This repo holds the file format, its JSON Schema, and a CLI that checks contracts and hands the right one to the agent.
 
+<!-- CONTRACT:BEGIN — hand-authored. The generator preserves everything between these markers. -->
+
+## Contract
+
+**Inputs:** Node.js 18+, file system, `package.json`, and YAML context schemas.
+
+**Outputs:** CLI tool `anc` (query, check, init), programmatic exports, and TypeScript definitions.
+
+**Invariants:**
+- Self-Verification Invariant: The `anc` CLI must pass all built-in selftest assertions on invocation.
+- AST Manifest Parity: Dependencies declared in `CONTEXT.agent.yaml` must match `package.json`.
+- Authority Scoping: Every module must declare explicit `autonomous` and `founder_approval` authority blocks.
+
+**Proves healthy:** `npm --prefix packages/anc test`
+
+**Do NOT load for:** High-level agent orchestration workflows -> `.agents/skills/intelligent-proof-loop`.
+
+<!-- CONTRACT:END -->
+
+---
+
 > **Status: early.** We started using ANC on 2026-10-16 in one TypeScript monorepo. We have not measured its effect on agent behaviour. An earlier version of this README and of our blog post stated results we could not reproduce; they were removed. See [SPECIFICATION.md](./SPECIFICATION.md) for exactly what the tooling does and does not check.
 
 ## The file
@@ -45,12 +66,13 @@ blast_radius:
 |---|---|
 | `anc check` | Fails on: schema errors; empty `authority` lists; unreplaced `anc init` placeholders; a `reads_from` import missing from `package.json`; a workspace dependency in `package.json` missing from the contract; cycles between workspace packages; invariant tests that reference files or npm scripts that don't exist, or that can't fail (`true`, `exit 0`, `… \|\| true`). pnpm/yarn scripts are not looked up. |
 | `anc query <path\|package>` | Prints the nearest contract for a file, directory or package, formatted for an agent. |
+| `anc trace <path> [--depth <n>] [--batch <dir>]` | Traces runtime execution context (`client-component`, `server-component`, `route-handler`, `background-worker`), child JSX components, outbound/inbound APIs, database tables with `tenant_id` isolation checks, and background events, coupled with module invariants. |
 | `anc verify <path…> \| --all \| --changed <ref>` | Runs the invariants' `test` commands from the workspace root; non-zero exit if any fails. |
 | `anc stats` | Counts contracts, invariants, and targeted vs broad tests (broad = a whole package's tests, typecheck, lint or build). |
 | `anc init [dir] \| --all` | Writes a skeleton that fails `check` until you fill it in. |
-| `anc selftest` | Plants one violation per rule and requires each to fail. |
+| `anc selftest` | Plants one violation per rule and requires each to fail. Run with `trace --selftest` for topology selftests. |
 
-It reads YAML and `package.json` files. It does **not** parse source code, so it won't notice an import that's missing from `package.json` (pair it with [knip](https://knip.dev)), and it can't tell whether a test really exercises its invariant.
+`anc check` validates manifests and YAML contracts against schemas and package graphs. `anc trace` parses source files to extract live code topology (connectors & wires) and passes them to agents via CLI and hooks. Pair with [knip](https://knip.dev) for dead-code pruning.
 
 ## Run it
 

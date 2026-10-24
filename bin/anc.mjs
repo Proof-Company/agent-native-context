@@ -7,18 +7,24 @@ import {
     findContextFiles,
     findWorkspaceRoot,
     formatContext,
+    formatTrace,
     resolveContext,
     stats,
+    stringifyYaml,
+    traceBatch,
+    traceFile,
     verify,
     workspacePackages,
     writeScaffold,
 } from "../lib/index.mjs";
 import { selftest } from "../lib/selftest.mjs";
+import { selftestTrace } from "../lib/trace-selftest.mjs";
 
 const HELP = `anc — Agent-Native Context
 
 Usage:
   anc query <path|package> [--json]       Print the nearest contract for a file, directory or package
+  anc trace <path> [--json]               Trace code topology, components, APIs, DB queries and invariants
   anc check [--check-deps]                Schema, authority, placeholders, dependency parity (both
                                           directions), workspace cycles, invariant-oracle integrity
   anc verify <path|package>... | --all | --changed <git-ref> [--timeout <sec>]
@@ -50,7 +56,41 @@ function exit(code) {
     process.exitCode = code;
 }
 
-if (cmd === "selftest" || flag("--selftest")) {
+if (cmd === "trace") {
+    if (flag("--selftest")) {
+        exit(selftestTrace() ? 0 : 1);
+    } else if (flag("--batch")) {
+        const targetDir =
+            value("--batch") !== undefined && !value("--batch").startsWith("-")
+                ? value("--batch")
+                : positional[1] || ".";
+        const depth = Number(value("--depth") || 0);
+        try {
+            const res = traceBatch(root, asTarget(targetDir), { depth });
+            console.log(
+                flag("--json") ? JSON.stringify(res, null, 2) : stringifyYaml({ batch_trace: res }),
+            );
+        } catch (err) {
+            console.error(`anc trace --batch: ${err.message}`);
+            exit(1);
+        }
+    } else {
+        const target = positional[1];
+        const depth = Number(value("--depth") || 0);
+        if (!target) {
+            console.error("usage: anc trace <path> [--depth <n>] [--batch <dir>] [--json]");
+            exit(1);
+        } else {
+            try {
+                const res = traceFile(root, asTarget(target), { depth });
+                console.log(flag("--json") ? JSON.stringify(res, null, 2) : formatTrace(res));
+            } catch (err) {
+                console.error(`anc trace: ${err.message}`);
+                exit(1);
+            }
+        }
+    }
+} else if (cmd === "selftest" || flag("--selftest")) {
     exit(selftest() ? 0 : 1);
 } else if (!cmd || flag("--help") || flag("-h")) {
     console.log(HELP);

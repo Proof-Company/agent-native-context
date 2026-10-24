@@ -184,3 +184,63 @@ export function hookOutput(
     payload: string | object,
     options?: { root?: string | null; stateDir?: string; resendMinutes?: number },
 ): string;
+
+export type RuntimeContext =
+    | "client-component"
+    | "server-component"
+    | "route-handler"
+    | "server-action"
+    | "background-worker"
+    | "test-suite"
+    | "library-module";
+
+export interface TableWire {
+    table: string;
+    tenant_scoped: boolean | string;
+}
+
+export interface WiresSpec {
+    apis: string[];
+    tables: TableWire[];
+    events: string[];
+    hooks: string[];
+}
+
+export interface TraceResult {
+    target: string;
+    runtime: RuntimeContext;
+    module: string;
+    purpose?: string;
+    renders: string[];
+    wires: WiresSpec;
+    transitive_wires?: WiresSpec | null;
+    invariants: InvariantSpec[];
+    authority?: AuthoritySpec | null;
+    blast_radius?: BlastRadiusSpec | null;
+}
+
+export interface BatchTraceSummary {
+    target_dir: string;
+    total_files_scanned: number;
+    runtimes: Record<string, number>;
+    unique_apis_count: number;
+    unique_tables_count: number;
+    warnings_count: number;
+    warnings: string[];
+}
+
+export function detectRuntime(code: string, relPath: string): RuntimeContext;
+export function extractImportMap(code: string): Map<string, string>;
+export function extractRenderedComponents(code: string, importMap: Map<string, string>): string[];
+export function extractWires(code: string, relPath: string): WiresSpec;
+export function traceFile(
+    root: string,
+    target: string,
+    options?: { json?: boolean; depth?: number },
+): TraceResult;
+export function formatTrace(result: TraceResult): string;
+export function traceBatch(
+    root: string,
+    targetDir: string,
+    options?: { depth?: number },
+): BatchTraceSummary;

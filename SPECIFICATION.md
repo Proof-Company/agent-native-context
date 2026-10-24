@@ -57,14 +57,15 @@ Parity is checked only for contracts that sit beside a `package.json`. Workspace
 ## 4. Other operations
 
 - **`anc query <path|package>`** prints the contract for a file, directory or package in a compact form for an agent: purpose, invariants with their tests, authority, dependencies, blast radius. Self-reported `health` is not printed.
+- **`anc trace <path> [--depth <n>] [--batch <dir>]`** inspects source code AST and imports to extract the exact runtime execution context (`client-component`, `server-component`, `route-handler`, `background-worker`, `library-module`, `test-suite`), rendered child JSX components paired with source paths, outbound and inbound API routes, database tables with `tenant_id` isolation checks, background Inngest events, and custom domain hooks, coupled with the nearest module invariants. Supports transitive wire resolution across local imports via `--depth <n>`, and whole-directory architecture summaries via `--batch <dir>`.
 - **`anc verify <targets…> | --all | --changed <ref>`** runs the `test` commands of the selected contracts from the workspace root. Identical commands run once. It exits non-zero if any command fails.
 - **`anc stats`** counts contracts, invariants, invariants with and without a test, and tests that are **targeted** versus **broad**. A test is targeted when it names a script or test file that is not a config file (`.js/.mjs/.cjs/.ts/.tsx/.sh/.py`, excluding `tsconfig*`, `*.config.*` and `package.json`), runs an npm script other than `build`, `test`, `lint`, `typecheck` or `type-check`, or runs inline code (`node -e`). Every other test is broad: a whole package's or directory's tests, a typecheck, a lint or a build.
 - **`anc init [dir] | --all`** writes a skeleton contract. The skeleton fails `anc check` until its placeholders are replaced.
 
 ## 5. Agent integration
 
-- **Claude Code.** A `PreToolUse` hook on `Edit|Write|MultiEdit|NotebookEdit` resolves the contract for the target file and returns it as `hookSpecificOutput.additionalContext` (plain stdout from a `PreToolUse` hook is not shown to the model). It sends a module's contract at most once every 30 minutes within a session (so it can return after context compaction) and never blocks a tool call. Blocking edits to protected paths is a separate concern; use Claude Code permission rules or a path-based hook.
-- **Other agents.** Any agent that can run a command can call `anc query` before editing and `anc verify` before finishing. A Cursor rule is provided.
+- **Claude Code.** A `PreToolUse` hook on `Edit|Write|MultiEdit|NotebookEdit` resolves the contract for the target file and returns both the module contract and the target file's live Code Topology & Wire Trace as `hookSpecificOutput.additionalContext` (plain stdout from a `PreToolUse` hook is not shown to the model). It sends a module's contract at most once every 30 minutes within a session (so it can return after context compaction) and never blocks a tool call. Blocking edits to protected paths is a separate concern; use Claude Code permission rules or a path-based hook.
+- **Other agents.** Any agent that can run a command can call `anc query` or `anc trace` before editing and `anc verify` before finishing. A Cursor rule is provided.
 
 The `authority` section is context for the agent. ANC does not enforce it.
 

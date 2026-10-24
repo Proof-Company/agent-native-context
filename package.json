@@ -31,7 +31,7 @@
         "node": ">=18"
     },
     "scripts": {
-        "test": "node bin/anc.mjs selftest",
+        "test": "node bin/anc.mjs selftest && node bin/anc.mjs trace --selftest",
         "example": "node bin/anc.mjs check --root examples/monorepo && node bin/anc.mjs verify --all --root examples/monorepo"
     },
     "keywords": [
@@ -45,6 +45,7 @@
     ],
     "dependencies": {
         "ajv": "^8.17.1",
+        "proof-os": "file:../../../../OneDrive/Desktop/Proof_Co_OS",
         "yaml": "^2.7.0"
     }
 }
